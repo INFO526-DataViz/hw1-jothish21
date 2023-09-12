@@ -1,7 +1,9 @@
 ---
 title: "HW 01"
 author: "JOTHISH KUMAR POLAKI"
-format: html
+format: 
+  html:
+    embed-resources: true
 toc: true
 ---
 
