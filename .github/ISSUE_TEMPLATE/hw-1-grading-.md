@@ -64,7 +64,7 @@ b. `[2 / 2]`
   - Feedback: [Insert feedback here.]
 
 c. `[15 / 16]` (2 points each)
-  - Feedback: [Here you might want to use the facet_grid() or facet_wrap(), to align the graphs. Some info: https://www.statology.org/facet_wrap-vs-facet_grid-in-r/]
+  - Feedback: [Here you might want to use the grid.arrange(), to align the graphs. Some info: https://cran.r-project.org/web/packages/gridExtra/vignettes/arrangeGrob.html]
   
 ### Exercise 4: `[5 / 10 points]`
 
