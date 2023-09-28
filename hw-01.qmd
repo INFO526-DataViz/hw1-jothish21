@@ -139,11 +139,11 @@ b\) Creating a side by side boxplots of marathon times for men and women with di
 
 ```{r Plot_for_part-b, warning=FALSE, message=FALSE}
 nyc_marathon |>
-  ggplot(aes(x = year, y = time, fill = division)) +
+  ggplot(aes(y = time, fill = division)) +
   geom_boxplot() +
+  facet_wrap(~division) +
   scale_fill_manual(values = c("blue", "red")) +
-  labs(x = "year",
-       y = "time(min)",
+  labs(y = "time(min)",
        title = "Marathon times by gender") +
   theme_bw()
 ```
@@ -154,16 +154,18 @@ c\) Creating a plot to avoid the redundancy from the above plot:-
 
 ```{r plot_for_part-c, warning=FALSE, message=FALSE}
 nyc_marathon |>
-  ggplot(aes(x = division, y = time, fill = division)) +
+  ggplot(aes(x = year, y = time, fill = division)) +
   geom_boxplot() +
   scale_fill_manual(values = c("blue", "red")) +
-  labs(x = "year",
-       y = "time(min)",
-       title = "Marathon times over the years by gender") + 
-  theme_bw()
+  facet_wrap(~ division) +
+  labs(x = "Year",
+       y = "Marathon Times(min)",
+       title = "Marathon Times by Gender") +
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
 
-This plot avoids redundancy by not including the year on the x-axis. The data-to-ink ratio is improved as the plot focuses on the comparision between genders.
+This plot avoids redundancy by creating two panels separated to visualize data based on Gender. By doing this we get rid of legends and we can clearly understand the marathon times in relation with years on x-axis. Data-to-ink ratio is improved as most of the ink is used to represent the data(legends are removed).
 
 d\) Visualizing the marathon times by gender over the years:-
 
@@ -219,76 +221,49 @@ c\) Part C
 
 ```{r Loading packages, warning=FALSE, message=FALSE}
 library(openintro)
+library(ggplot2)
+library(grid)
+library(gridExtra)
 ```
 
-Plot A
+Plots
 
-```{r Plot A, warning=FALSE, message=FALSE}
-county |>
+```{r Plots, warning=FALSE, message=FALSE}
+A <- county |>
   ggplot(aes(x = homeownership, y = poverty)) +
   geom_point()
-```
-
-Plot B
-
-```{r Plot B, warning=FALSE, message=FALSE}
-county |>
+B <- county |>
   ggplot(aes(x = homeownership, y = poverty)) +
   geom_point() +
   geom_smooth(se = FALSE)
-```
-
-Plot C
-
-```{r Plot C, warning=FALSE, message=FALSE}
-county |>
+C <- county |>
   ggplot(aes(x = homeownership, y = poverty, group = metro)) +
   geom_point() +
   geom_smooth(se = FALSE, colour = "green")
-```
-
-Plot D
-
-```{r Plot D, warning=FALSE, message=FALSE}
-county |>
+D <- county |>
   ggplot(aes(x = homeownership, y = poverty, group = metro)) +
   geom_smooth(se = FALSE) +
   geom_point()
-```
-
-Plot E
-
-```{r Plot E, warning=FALSE, message=FALSE}
-county |>
+E <- county |>
   ggplot(aes(x = homeownership, y = poverty)) +
   geom_smooth(se = FALSE, aes(linetype = metro)) +
   geom_point(aes(colour = metro))
-```
-
-Plot F
-
-```{r Plot F, warning=FALSE, message=FALSE}
-county |>
+F <- county |>
   ggplot(aes(x = homeownership, y = poverty, colour = metro)) +
   geom_point() +
   geom_smooth(se = FALSE)
-```
-
-Plot G
-
-```{r Plot G, warning=FALSE, message=FALSE}
-county |>
+G <- county |>
   ggplot(aes(x = homeownership, y = poverty)) +
   geom_point(aes(colour = metro)) +
   geom_smooth(se = FALSE)
-```
-
-Plot H
-
-```{r Plot H, warning=FALSE, message=FALSE}
-county |>
+H <- county |>
   ggplot(aes(x = homeownership, y = poverty, colour = metro)) +
   geom_point()
+
+grid.arrange(A, B, ncol = 2)
+grid.arrange(C, D, ncol = 2)
+grid.arrange(E, F, ncol = 2)
+grid.arrange(G, H, ncol = 2)
 ```
 
 ## 4 - Rental apartments in SF
@@ -300,7 +275,7 @@ library(tidyverse)
 library(ggplot2)
 ```
 
-Retriving the raw data from the tidytuesday github repo
+Retrieving the raw data from the tidytuesday github repo
 
 ```{r Retriving_data, warning=FALSE, message=FALSE}
 rent_raw <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-05/rent.csv')
@@ -327,26 +302,29 @@ Selecting 7 neighborhoods and others are combined to form a "others" block to vi
 selected_nhood <- c("mission district", "Western addition", "haight ashbury", "marina / cow hollow", "parkside", "inner richmond", "tenderloin", "lakeshore")
 ```
 
-Mutating the sf_rent data to the selected neighborhoods for visualization.
+Mutating the sf_rent data to the selected neighborhoods and year interval for visualization.
 
 ```{r Mutating_data_to_sf_rent, warning=FALSE, message=FALSE}
 sf_rent <- sf_rent |>
   mutate(nhood = ifelse(nhood %in% selected_nhood, as.character(nhood), "others"))
+
+sf_rent <- sf_rent |>
+  mutate(years = paste0(floor(year/5) * 5, " - ", ifelse(floor(year/5) * 5 + 4 > 2018, 2018, floor(year/5) * 5 + 4)))
 ```
 
 Visualizing the data and creating a box plot to check the Distribution of rental prices in San Francisco.
 
 ```{r Final_plot_to_visualize, warning=FALSE, message=FALSE}
 sf_rent |>
-  ggplot(aes(x = year, y = price / beds, fill = nhood)) +
+  ggplot(aes(x = as.factor(years), y = price / beds, fill = nhood)) +
   geom_boxplot() +
-  labs(x = "Year",
+  facet_wrap(~nhood, ncol = 4) +
+  labs(x = "Years",
        y = "Price per Bed",
-       title = "Distribution of Rental prices in San Francisco",
-       fill = "Neighbourhood") +
-  theme_minimal() +
-  theme(legend.position = "top")
-
+       title = "Distribution of Rental prices in San Francisco") +
+  theme_bw() +
+  # removing legend to improve data-to-ink ratio
+  theme(legend.position = "none") 
 ```
 
 Context -
@@ -359,7 +337,9 @@ Interpretation from Plot:-
 
 2\) We can discern the trends in rental prices by examining the plots over the years and we can see the neighborhood "Marina / Cow Hollow" appears to be consistently having higher median prices per bed whereas "tenderloin" has the lower median compared to other neighborhoods.
 
-3\) Outliers in the boxplot, such as "Mission district" in recent years, shows significant deviations from the neighborhood's typical rental pricing. These outliers provides insights for renters and policymakers in understanding and navigating San Francisco's rental market.
+3\) The plot's layout facilitates a side-by-side comparison of rental price distributions among chosen neighborhoods. This comparative view aids in understanding how rental prices have evolved and how neighborhoods stack up against each other in terms of housing costs.
+
+4\) Outliers in the boxplot, such as "Mission district" in recent years, shows significant deviations from the neighborhood's typical rental pricing. These outliers provides insights for renters and policymakers in understanding and navigating San Francisco's rental market.
 
 ## 5 - Napoleon's march.
 
@@ -368,7 +348,9 @@ Link to source --\> http://euclid.psych.yorku.ca/www/psy6135/tutorials/Minard.ht
 Reading data and understanding it
 
 ```{r Read_data, warning=FALSE, message=FALSE}
+# loading data
 napoleon <- readRDS("data/napoleon.rds")
+# checking troops, cities and temperatures data
 str(napoleon$troops)
 str(napoleon$cities)
 str(napoleon$temperatures)
@@ -377,6 +359,7 @@ str(napoleon$temperatures)
 Loading libraries and installing the packages
 
 ```{r Loading_libraries, warning=FALSE, message=FALSE}
+# Loading packages and libraries
 # install.packages("gridExtra")
 # install.packages("scales")
 library(ggplot2)
@@ -389,13 +372,15 @@ library(dplyr)
 Plotting a graph napolean_troops with long and lat at x and y axes respectively
 
 ```{r napolean_troops, warning=FALSE, message=FALSE}
-ggplot(napoleon$troops, aes(long, lat)) +
+# Ploting troops paths with line width based on survivors using longitude and lattitudes
+ggplot(napoleon$troops, aes(x = long, y = lat)) +
   geom_path(aes(line_width = survivors))
 ```
 
 Plotting the graph in different colours based on the paths taken by the troops, to make it easy to understand
 
 ```{r Adding_colors, warning=FALSE, message=FALSE}
+# Plotting troops paths with size and color based on survivors and direction
 ggplot(napoleon$troops, aes(long, lat)) +
   geom_path(aes(size = survivors, colour = direction, group = group)) +
   coord_fixed()  #fixing coordinates based on aspect ratio
@@ -404,9 +389,11 @@ ggplot(napoleon$troops, aes(long, lat)) +
 Arranging the scales to fit the data into the graph
 
 ```{r Arranging_scales, warning=FALSE, message=FALSE}
+# Plotting troops paths with adjustments for readability
 breaks <- c(1, 2, 3) * 10^5  #fixing the x-axis readability
 ggplot(napoleon$troops, aes(long, lat)) +
   geom_path(aes(size = survivors, colour = direction, group = group), lineend = "round") +
+  # scaling the size with custom range and specified breaks
   scale_size("Survivors", range = c(1,10), breaks = breaks, labels = scales::comma(breaks))+
   scale_color_hue("Direction", labels = c("Advance", "Retreat"))
 ```
@@ -414,20 +401,23 @@ ggplot(napoleon$troops, aes(long, lat)) +
 Storing the plot in graph_troops
 
 ```{r Plot_save, warning=FALSE, message=FALSE}
+# storing the plot to graph_troops
 graph_troops <- last_plot()
 ```
 
 Adding cities along the path taken by troops
 
 ```{r Cities, warning=FALSE, message=FALSE}
+# adding city labels to troops plot
 graph_troops + geom_text(data = napoleon$cities, aes(label = city), size = 4)
 ```
 
 Adjusting the cities into the plot
 
 ```{r Adjusting_cities, warning=FALSE, message=FALSE}
+# Plotting troops paths with points and city labels
 graph_troops + geom_point(data = napoleon$cities) +
-  geom_text(data = napoleon$cities, aes(label = city), vjust = 1.5, family = "Times New Roman" )
+  geom_text(data = napoleon$cities, aes(label = city), vjust = 1.5, family = "Times New Roman" ) # adjusting the text and font
 ```
 
 Using ggrepel() to plot overlapping points/paths separately
@@ -436,6 +426,7 @@ Using ggrepel() to plot overlapping points/paths separately
 # install.packages("ggrepel")
 library(ggplot2)
 library(ggrepel)
+# plotting troops paths with points and city labels using repel
 graph_troops + geom_point(data = napoleon$cities) +
   geom_text_repel(data = napoleon$cities, aes(label = city))
 ```
@@ -443,18 +434,21 @@ graph_troops + geom_point(data = napoleon$cities) +
 Saving the plot from troops and cities data graph_troops_cities
 
 ```{r Saving_plot, warning=FALSE, message=FALSE}
+# storing the plot to graph_troops_cities
 graph_troops_cities <- last_plot()
 ```
 
 Reading and understanding the temp data set
 
 ```{r Reading_temp, warning=FALSE, message=FALSE}
+# understanding temperatures data
 napoleon$temperatures
 ```
 
 Plotting temperature using line plot
 
 ```{r Plotting_temp, warning=FALSE, message=FALSE}
+# Plotting temperatures data
 ggplot(napoleon$temperatures, aes(long, temp)) +
   geom_path(color = "black", size = 1.5) +
   geom_point(size = 2)
@@ -464,14 +458,17 @@ Labelling the temperature at different points on the plot
 
 ```{r Labelling_temp, warning=FALSE, message=FALSE}
 library(dplyr)
+# Mutating temperature data to create a new format
 napoleon_temp <- napoleon$temperatures %>%
   mutate(format_degrees = paste0(temp, "?? ", date))
+# displaying the first few rows
 head(napoleon_temp$format_degrees)
 ```
 
 Plotting the graph
 
 ```{r Plotting_graph, warning=FALSE, message=FALSE}
+# Plotting mutated temperature data with labels
 ggplot(napoleon_temp, aes(long, temp)) +
   geom_path(color = "grey", size = 1.5) +
   geom_point(size = 1) +
@@ -481,44 +478,53 @@ ggplot(napoleon_temp, aes(long, temp)) +
 Saving the graph for temperature across different dates
 
 ```{r Saving, warning=FALSE, message=FALSE}
+# saving plot to graph_temp
 graph_temp <- last_plot()
 ```
 
 Compiling all graphs together using gridExtra library
 
 ```{r Loading_gridExtra, warning=FALSE, message=FALSE}
+# loading gridExtra library
 library(gridExtra)
+# Arranging the troops and cities plot with the temperature plot
 grid.arrange(graph_troops_cities, graph_temp)
 ```
 
 Removing the labels in the plot for checking the movement of troops and cities to match the temperature plot
 
 ```{r Remove_labels, warning=FALSE, message=FALSE}
+# Adjusting the x-axis limits and appearances of the troops and cities plot
 library(ggplot2)
 graph_troops_cities + coord_cartesian(xlim = c(24, 38)) +
   labs(x = NULL, y = NULL) + guides(color = FALSE, size = FALSE) +
   theme_void()
 
+# saving plot to graph_troops_cities_edited
 graph_troops_cities_edited <- last_plot()
 ```
 
 Using similar edits on the temperature graph and adjusting it
 
 ```{r Adjusting_graph, warning=FALSE, message=FALSE}
+# Adjusting the x-axis limits and appearances of the temperature plot
 graph_temp + 
   coord_cartesian(xlim = c(24, 38)) +
+  # setting y axis label
   labs(x = NULL, y = "Temperature") +
   theme_bw() +
   theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank(),
         panel.grid.minor.y = element_blank(), axis.text.x = element_blank(), axis.ticks = element_blank(),
         panel.border = element_blank())
 
+# storing edited temperature plot
 graph_temp_edited <- last_plot()
 ```
 
 Plotting the entire graph together
 
 ```{r Final_napolean_troop_plot, warning=FALSE, message=FALSE}
+# Arrange the edited troops and cities plot and the edited temperature plot
 library(grid)
 library(gridExtra)
 grid.arrange(graph_troops_cities_edited, graph_temp_edited, nrow=2, heights=c(3.5, 1.2))
